@@ -1,34 +1,57 @@
 import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
 
 const router = Router();
+const prisma = new PrismaClient();
 
 // Create Bin
-router.post('/', (req, res) => {
-  res.status(501).json({ error: 'Not Implemented' });
-});
+router.post('/', async (req, res) => {
+  const { qrCode, userId } = req.body;
+  try {
+    const result = await prisma.bin.create({
+      data: {
+        qrCode, 
+        userId 
+      },
+    });
+    res.json(result);
+  } catch (e) {
+    res.status(400).json({ error: 'Error happened in creating a bin'})
+  }});
 
 // List Bin
-router.get('/', (req, res) => {
-  res.status(501).json({ error: 'Not Implemented' });
+router.get('/', async (req, res) => {
+  const allBins = await prisma.bin.findMany( {include: {items: true} } );
+  res.json(allBins);
 });
 
 // Get One Bin
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   const {id} = req.params;
-  res.status(501).json({ error: `Not Implemented: ${id}` });
+  const bin = await prisma.bin.findUnique({ include: {items: true}, where: {id: Number(id)}})
+  res.json(bin);
 });
 
-// Update Bin
-router.put('/:id', (req, res) => {
+// Update Bin (Probably will not need)
+router.put('/:id', async (req, res) => {
   const {id} = req.params;
-  res.status(501).json({ error: `Not Implemented: ${id}` });
+  const { qrCode } = req.body;
+  try {
+    const result = await prisma.bin.update({
+      where: { id: Number(id)},
+      data: { qrCode }
+    });
+    res.json(result);
+  } catch (e) {
+    res.status(400).json({ error: 'Error happened in updating a bin'})
+  }
 });
 
 // Delete Bin
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   const {id} = req.params;
-  res.status(501).json({ error: `Not Implemented: ${id}` });
-});
+  await prisma.bin.delete({ where: {id: Number(id)} })
+  res.status(200).json({ message: 'Successfully deleted bin', success: true})});
 
 
 export default router;

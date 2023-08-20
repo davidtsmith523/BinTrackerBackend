@@ -8,7 +8,6 @@ const prisma = new PrismaClient();
 router.post('/', async (req, res) => {
   const { email, name, username, password } = req.body;
   try {
-
     const result = await prisma.user.create({
       data: {
         email,
@@ -25,14 +24,23 @@ router.post('/', async (req, res) => {
 
 // List users
 router.get('/', async (req, res) => {
-  const allUsers = await prisma.user.findMany();
+  const allUsers = await prisma.user.findMany({include: {bins: true} });
   res.json(allUsers);
 });
 
 // Get One User
 router.get('/:id', async (req, res) => {
   const {id} = req.params;
-  const user = await prisma.user.findUnique({ where: {id: Number(id)}})
+  const user = await prisma.user.findUnique({ 
+    where: { id: Number(id) },
+    include: {
+      bins: {
+        include: {
+          items: true // Include items within each bin
+        }
+      }
+    }
+  });
   res.json(user);
 });
 
@@ -55,7 +63,6 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const {id} = req.params;
   await prisma.user.delete({ where: {id: Number(id)} })
-  console.log(id);
   res.status(200).json({ message: 'Successfully deleted user', success: true})
 });
 
